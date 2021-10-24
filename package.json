@@ -1,7 +1,7 @@
 {
-  "name": "morphologic-box",
+  "name": "morphological-box",
   "version": "1.0.0",
-  "description": "Morphologic / Zwicky box",
+  "description": "Morphological / Zwicky box",
   "main": "index.js",
   "scripts": {
     "start": "node server.js",

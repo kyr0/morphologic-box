@@ -1,8 +1,8 @@
-# Morphologic / Zwicky Box
+# Morphological / Zwicky Box
 
-A simple vanilla JS/CSS/HTML implementation to visualize a Morphologic / Zwicky box.
+A simple vanilla JS/CSS/HTML implementation to visualize a Morphological / Zwicky box.
 
-Demo: [Morphologic / Zwicky Box Visualization](https://kyr0.github.io/morphologic-box/)
+Demo: [Morphological / Zwicky Box Visualization](https://kyr0.github.io/morphological-box/)
 
 ## Setup
 
