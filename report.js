@@ -224,6 +224,7 @@ const resetFilter = () => {
 
 // --- initialization
 const render = () => {
+    resetFilter()
     parseTableBaseData()
     renderTable()
     syncGraphSizeWithTableSize()
@@ -239,12 +240,6 @@ window.addEventListener('load', () => {
 // --- event listeners
 
 // render table on change of base data
-baseDataEl.addEventListener('keyup', () => {
-    resetFilter()
-    render()
-})
-associationDataEl.addEventListener('keyup', () => {
-    resetFilter()
-    render()
-})
+baseDataEl.addEventListener('keyup', render)
+associationDataEl.addEventListener('keyup', render)
 window.addEventListener('resize', render)
