@@ -1,5 +1,7 @@
 const parseCSV = (strData, strDelimiter = ',') => {
 
+    if (!strData) strData = '   ';
+
     const objPattern = new RegExp((
         // delimiters
         "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +

@@ -21,8 +21,13 @@
         <div class="report">
             <div class="visualization">
                 <svg id="graph"></svg>
-                <table id="table"></table>
-                <legend id="legend"></legend>
+                <div id="tableContainer">
+                    <table id="table"></table>
+                </div>
+                <div class="controls">
+                    <legend id="legend"></legend>
+                    <button id="switchAll">Switch all</button>
+                </div>
                 <span class="hide" id="error"></span>
                 <span class="hide" id="warn"></span>
             </div>
@@ -30,21 +35,13 @@
             <div class="data">
 
                 <h2>Base data (CSV)</h2>
-                <textarea id="baseData" rows="10">
-Categ./Dimen.,YOU,Klima,WeltCo2,ZeroCalc,GAMMA1
-Quality,A,B,C,D,E
-Purity,Foo,Foo1,Foo2
-Quantity,Low,Middle,High
-                </textarea>
+                <textarea id="baseData" rows="10"></textarea>
+                <button id="resetBaseData">Reset</button>
 
                 <h2>Morph data (CSV)</h2>
-                <textarea id="morphData" rows="10">
-#cc0000,#00cc00,purple,blue,red
-A,E,D,A,A
-Foo1,Foo2,Foo,Foo1,Foo
-Middle,Low,Low,High,Middle
-                
-                </textarea>
+                <textarea id="morphData" rows="10"></textarea>
+                <button id="resetMorphData">Reset</button>
+
             </div>
         </div>
     </div>

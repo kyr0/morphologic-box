@@ -1,14 +1,28 @@
 
+const baseDataDefaultValue = `Categ./Dimen.,YOU,Klima,WeltCo2,ZeroCalc,GAMMA1
+Quality,A,B,C,D,E
+Purity,Foo,Foo1,Foo2
+Quantity,Low,Middle,High`
+
+const morphDataDefaultValue = `#cc0000,#00cc00,purple,blue,red
+A,E,D,A,A
+Foo1,Foo2,Foo,Foo1,Foo
+Middle,Low,Low,High,Middle`
+
 const $ = (selector) => document.querySelector(selector) 
 const svgNS = 'http://www.w3.org/2000/svg'
 const baseDataEl = $('#baseData')
-const associationDataEl = $('#morphData')
+const morphDataEl = $('#morphData')
 const graphEl = $('#graph')
 const tableEl = $('#table')
 const legendEl = $('#legend')
 const errorEl = $('#error')
 const warnEl = $('#warn')
-const linePaddingLeft = 15
+const switchAllEl = $('#switchAll')
+const resetBaseDataEl = $('#resetBaseData')
+const resetMorphDataEl = $('#resetMorphData')
+const visuEl = $('.visualization')
+const linePaddingLeft = 20
 const dotRadius = 4
 const dotColor = '#77777788'
 
@@ -30,27 +44,22 @@ let warnings = {}
 const getDuplicates = values => values.filter((item, index) => values.indexOf(item) != index)
 
 const showError = (name, ...msg) => {
-
     errors[name] = 'ERROR: ' + msg.map(value => value || 'undefined').join(' ')
-
     let message = '';
     Object.keys(errors).forEach(error => message += errors[error] + '\n')
 
     errorEl.innerText = message;
-
     errorEl.setAttribute('class', '')
 };
 const showWarning = (name, ...msg) => {
-
     warnings[name] = 'WARNING: ' + msg.map(value => value || 'undefined').join(' ')
-
     let message = '';
     Object.keys(warnings).forEach(warning => message += warnings[warning] + '\n')
 
     warnEl.innerText = message;
-
     warnEl.setAttribute('class', '')
 }
+
 const clearError = (name) => {
 
     if (!name) {
@@ -74,7 +83,7 @@ const clearWarn = (name) => {
     if (Object.keys(warnings).length === 0) {
         warnEl.setAttribute('class', 'hide')
     }
-};
+}
 
 const renderLegend = () => {
 
@@ -107,6 +116,19 @@ const renderLegend = () => {
     })
 }
 
+const switchAllFilters = () => {
+    if (isFilterActive) {
+        // enable all
+        showDimensions = dimensionNames
+    } else {
+        // disable all
+        showDimensions = []
+    }
+    isFilterActive = !isFilterActive
+
+    render(false)
+}
+
 // render table from base data CSV
 const renderTable = () => {
     tableEl.innerHTML = ''
@@ -123,7 +145,6 @@ const renderTable = () => {
         let rowEl = document.createElement('tr')
         let categoryName;
         let dimensionName;
-
 
         for (let j=0; j<row.length; j++) {
             let td = document.createElement(i === 0 ? 'th' : 'td')
@@ -288,7 +309,7 @@ const parseTableBaseData = () => {
 
 const parseGraphData = () => {
     try {
-        morphData = getData(associationDataEl.value)
+        morphData = getData(morphDataEl.value)
     } catch(e) {}
 }
 
@@ -328,16 +349,56 @@ const render = (doResetFilter = true) => {
         clearError()
         clearWarn()
 
-    } catch(e) {}   
+    } catch(e) {
+        console.error(e)
+    }   
 }
 
 window.addEventListener('load', () => {
-    render();
+
+    // restore initially
+    restore(baseDataEl, 'baseData', baseDataDefaultValue)
+    restore(morphDataEl, 'morphData', morphDataDefaultValue)
+
+    render()
 })
+
+const store = (name, data) => {
+    localStorage.setItem(name, data)
+}
+
+const restore = (el, name, defaultValue) => {
+    el.value = localStorage.getItem(name) ? localStorage.getItem(name) : defaultValue
+}
+
+
 
 // --- event listeners
 
+resetBaseDataEl.addEventListener('click', () => {
+    store('baseData', baseDataDefaultValue)
+    restore(baseDataEl, 'baseData')
+    render()
+})
+
+resetMorphDataEl.addEventListener('click', () => {
+    store('morphData', morphDataDefaultValue)
+    restore(morphDataEl, 'morphData')
+    render()
+})
+
+
 // render table on change of base data
-baseDataEl.addEventListener('keyup', render)
-associationDataEl.addEventListener('keyup', render)
+baseDataEl.addEventListener('keyup', (evt) => {
+    store('baseData', evt.target.value)
+    render()
+})
+morphDataEl.addEventListener('keyup', (evt) => {
+    store('morphData', evt.target.value)
+    render()
+})
+switchAllEl.addEventListener('click', switchAllFilters)
 window.addEventListener('resize', render)
+window.addEventListener('beforeprint', render)
+
+new ResizeObserver(render).observe(visuEl)
