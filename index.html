@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+    <title>Morphologic Box</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap" rel="stylesheet">
+
+    <link href="index.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Morphologic Box</h1>
+
+        <div class="report">
+            <div class="visualization">
+                <svg id="graph"></svg>
+                <table id="table"></table>
+                <legend id="legend"></legend>
+            </div>
+
+            <div class="data">
+
+                <h2>Base data (CSV)</h2>
+                <textarea id="baseData" rows="10">
+Feature/Dimension,YOU,Klima,WeltCo2,ZeroCalc,GAMMA
+Quality,A,B,C,D,E
+Purity,Foo,Foo1,Foo2
+Quantity,Low,Middle,High
+                </textarea>
+
+                <h2>Morph data (CSV)</h2>
+                <textarea id="morphData" rows="10">
+#cc0000,#00cc00,purple,blue,red
+A,E,D,A,A
+Foo1,Foo2,Foo,Foo1,Foo
+Middle,Low,Low,High,Middle
+                
+                </textarea>
+            </div>
+        </div>
+    </div>
+
+    <script src="parseCSV.js"></script>
+    <script src="report.js"></script>
+
+</body>
+</html>

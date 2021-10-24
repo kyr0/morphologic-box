@@ -1,0 +1,72 @@
+body, html {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.container {
+    padding: 20px;
+}
+
+.report {
+    display: flex;
+    flex-direction: column;
+}
+
+.visualization {
+    flex-grow: 8;
+}
+
+.data {
+    flex-grow: 2;
+}
+
+#baseData, #morphData {
+    width: 100%;
+}
+
+#table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0px;
+}
+
+#graph {
+    position: absolute;
+    z-index: 1;
+}
+
+th, .category {
+    font-weight: bold;
+    text-align: center;
+}
+
+th:nth-child(even) {
+    background-color: #dddddd99;
+}
+
+td {
+    text-align: center;
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+
+tr:nth-child(odd) {
+    background-color: #eeeeee8e;
+}
+
+tr:nth-child(even) .category {
+    background-color: #dddddd99;
+}
+
+textarea {
+    font-family: monospace;
+}
+
+#legend {
+    margin-top: 5px;
+}
