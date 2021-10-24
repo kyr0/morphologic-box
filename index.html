@@ -33,22 +33,29 @@
             </div>
 
             <div class="data">
-
-                <h2>Base data (CSV)</h2>
+                <h2>Base data (CSV/TSV)</h2>
+                <p>Data can be copied here from Apple Numbers/MS Excel by copy &amp; paste.</p>
                 <textarea id="baseData" rows="10"></textarea>
                 <button id="resetBaseData">Reset</button>
 
-                <h2>Morph data (CSV)</h2>
+                <h2>Morph data (CSV/TSV)</h2>
                 <p>
                     First line is ignored (just for reference of dimension names) but must be reserved.
                     First column is ignored too (just for reference of category names) but must be reserved.
                 </p>
+                <p>
+                    Generate a color: <input type="color" value="#e66465"> Select a color, click on the color type selector until a #hheexx color appears. Use this color.
+                </p>
                 <textarea id="morphData" rows="10"></textarea>
                 <button id="resetMorphData">Reset</button>
 
+                <h2>Excel template</h2>
+                <a href="data_tpl.xlsx">Download the Excel template</a> for a comfortable editing and copy &amp; paste workflow
             </div>
         </div>
     </div>
+
+
 
     <script src="parseCSV.js"></script>
     <script src="report.js"></script>

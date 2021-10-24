@@ -1,4 +1,4 @@
-const parseCSV = (strData, strDelimiter = ',') => {
+const parseCSV = (strData, strDelimiter = ",") => {
 
     if (!strData) strData = '   ';
 

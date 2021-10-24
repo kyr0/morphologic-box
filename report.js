@@ -1,14 +1,12 @@
 
-const baseDataDefaultValue = `Categ./Dimen.,YOU,Klima,WeltCo2,ZeroCalc,GAMMA1
-Quality,A,B,C,D,E
-Purity,Foo,Foo1,Foo2
-Quantity,Low,Middle,High`
+const baseDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate
+Type of provider	For profit	Non-profit / Institute	Non-profit / NGO	Non-profit / Government	
+Type of calculation	Web	App	Excel	App + Web available	`
 
-const morphDataDefaultValue = `Categ./Dimen.,YOU,Klima,WeltCo2,ZeroCalc,GAMMA1
-Line Color,#cc0000,#00cc00,purple,blue,red
-Quality,A,E,D,A,A
-Purity,Foo1,Foo2,Foo,Foo1,Foo
-Quantity,Middle,Low,Low,High,Middle`
+const morphDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate
+Line Color (hex)	#2DCBD7	red	blue	purple	grey
+Type of provider	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit
+Type of calculation	Web	Web	Web	Web	Web`
 
 const $ = (selector) => document.querySelector(selector) 
 const svgNS = 'http://www.w3.org/2000/svg'
@@ -204,9 +202,7 @@ const renderGraph = () => {
     }
 
     dimensionNames.forEach((dimensionName, columnIndex) => {
-
-        if (columnIndex === 0) return; // skip category names
-
+        
         // don't render dimension if not included in filter
         if (!showDimensions.includes(dimensionName)) return;
 
@@ -300,7 +296,7 @@ const renderGraph = () => {
 const getData = (rawData) => {
     let parsedData;
     try {
-        parsedData = parseCSV(rawData)
+        parsedData = parseCSV(rawData, rawData.indexOf("\t") > -1 ? "\t" : ',')
     } catch(e) {}
 
     // filter out empty rows
