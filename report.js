@@ -84,7 +84,6 @@ const renderTable = () => {
                         showDimensions.push(dimensionName)
                     }
                 }
-                console.log('setting new',dimensionName,td)
                 headingElMap[dimensionName] = td;
             }
 
