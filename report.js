@@ -84,6 +84,7 @@ const renderTable = () => {
                         showDimensions.push(dimensionName)
                     }
                 }
+                console.log('setting new',dimensionName,td)
                 headingElMap[dimensionName] = td;
             }
 
@@ -193,20 +194,16 @@ const getData = (rawData) => {
     return parsedData;
 }
 
-const parseAndRenderBaseData = () => {
+const parseTableBaseData = () => {
     try {
         tableData = getData(baseDataEl.value)
     } catch(e) {}
-
-    renderTable();
 }
 
-const parseAndRenderGraphData = () => {
+const parseGraphData = () => {
     try {
         assocData = getData(associationDataEl.value)
     } catch(e) {}
-
-    renderGraph();
 }
 
 const syncGraphSizeWithTableSize = () => {
@@ -219,16 +216,20 @@ const syncGraphSizeWithTableSize = () => {
     graphEl.setAttributeNS(null, 'viewBox', `0 0 ${svgWidth} ${svgHeight}`)
     graphEl.setAttributeNS(null, 'width', svgWidth)
     graphEl.setAttributeNS(null, 'height', svgHeight)
-
-    parseAndRenderGraphData()
 }
 
+const resetFilter = () => {
+    showDimensions = []
+    isFilterActive = false
+}
 
 // --- initialization
 const render = () => {
-    parseAndRenderBaseData()
+    parseTableBaseData()
+    renderTable()
     syncGraphSizeWithTableSize()
-    parseAndRenderGraphData()
+    parseGraphData()
+    renderGraph()
     renderLegend()
 }
 
@@ -239,6 +240,12 @@ window.addEventListener('load', () => {
 // --- event listeners
 
 // render table on change of base data
-baseDataEl.addEventListener('keyup', parseAndRenderBaseData)
-associationDataEl.addEventListener('keyup', render)
-window.addEventListener('resize', syncGraphSizeWithTableSize)
+baseDataEl.addEventListener('keyup', () => {
+    resetFilter()
+    render()
+})
+associationDataEl.addEventListener('keyup', () => {
+    resetFilter()
+    render()
+})
+window.addEventListener('resize', render)
