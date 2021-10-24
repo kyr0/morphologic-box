@@ -4,10 +4,11 @@ Quality,A,B,C,D,E
 Purity,Foo,Foo1,Foo2
 Quantity,Low,Middle,High`
 
-const morphDataDefaultValue = `#cc0000,#00cc00,purple,blue,red
-A,E,D,A,A
-Foo1,Foo2,Foo,Foo1,Foo
-Middle,Low,Low,High,Middle`
+const morphDataDefaultValue = `Categ./Dimen.,YOU,Klima,WeltCo2,ZeroCalc,GAMMA1
+Line Color,#cc0000,#00cc00,purple,blue,red
+Quality,A,E,D,A,A
+Purity,Foo1,Foo2,Foo,Foo1,Foo
+Quantity,Middle,Low,Low,High,Middle`
 
 const $ = (selector) => document.querySelector(selector) 
 const svgNS = 'http://www.w3.org/2000/svg'
@@ -204,6 +205,8 @@ const renderGraph = () => {
 
     dimensionNames.forEach((dimensionName, columnIndex) => {
 
+        if (columnIndex === 0) return; // skip category names
+
         // don't render dimension if not included in filter
         if (!showDimensions.includes(dimensionName)) return;
 
@@ -221,12 +224,17 @@ const renderGraph = () => {
 
         morphData.forEach((morph, rowIndex) => {
 
-            let value = morph[columnIndex];
+            let value = morph[columnIndex+1];
+
             if (rowIndex === 0) {
+                return; // column/dimension names; skip
+            }
+
+            if (rowIndex === 1) { // color values
                 graphColorMap[dimensionName] = String(value)
                 return;
             };
-            let categoryName = categoryNames[rowIndex-1]
+            let categoryName = categoryNames[rowIndex-2]
 
             lineColor = graphColorMap[dimensionName];
             let targetCategoryEl = categoryElMap[categoryName][value];
@@ -235,14 +243,14 @@ const renderGraph = () => {
                 showWarning('CANNOT_FIND_ELEMENT_BASE_DATA', 'Cannot find element', value, 'for category', categoryName, 'in base data!')
             }
 
-            lineCoords[rowIndex] = {
-                x1: lineCoords[rowIndex-1].x2,
-                y1: lineCoords[rowIndex-1].y2,
+            lineCoords[rowIndex-1] = {
+                x1: lineCoords[rowIndex-2].x2,
+                y1: lineCoords[rowIndex-2].y2,
                 x2: targetCategoryEl.offsetLeft + linePaddingLeft,
                 y2: targetCategoryEl.offsetTop + targetCategoryEl.clientHeight / 2,
             }
 
-            dotCoords[rowIndex] = {
+            dotCoords[rowIndex-1] = {
                 cx: targetCategoryEl.offsetLeft + linePaddingLeft,
                 cy: targetCategoryEl.offsetTop + targetCategoryEl.clientHeight / 2,
                 r: dotRadius
@@ -370,8 +378,6 @@ const store = (name, data) => {
 const restore = (el, name, defaultValue) => {
     el.value = localStorage.getItem(name) ? localStorage.getItem(name) : defaultValue
 }
-
-
 
 // --- event listeners
 

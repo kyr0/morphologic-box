@@ -16,7 +16,7 @@
 
     <div class="container">
         <h1>Morphological / Zwicky Box</h1>
-        <p>Interactive multi-dimensional data mapping:</p>
+        <p>Interactive multi-dimensional data mapping. Table can be resized. In case of unresolvable error states, click all reset buttons (this may cause data loss!).</p>
 
         <div class="report">
             <div class="visualization">
@@ -39,6 +39,10 @@
                 <button id="resetBaseData">Reset</button>
 
                 <h2>Morph data (CSV)</h2>
+                <p>
+                    First line is ignored (just for reference of dimension names) but must be reserved.
+                    First column is ignored too (just for reference of category names) but must be reserved.
+                </p>
                 <textarea id="morphData" rows="10"></textarea>
                 <button id="resetMorphData">Reset</button>
 
