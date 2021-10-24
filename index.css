@@ -65,8 +65,30 @@ tr:nth-child(even) .category {
 
 textarea {
     font-family: monospace;
+    font-size: 14px;
 }
 
 #legend {
     margin-top: 5px;
+}
+
+#error {
+    background-color: #cc0000;
+}
+
+#error, #warn {
+    margin-top: 5px;
+    display: block;
+    color: #fff;
+    font-weight: bold;
+    padding: 5px;
+    font-family: monospace;
+}
+
+.hide {
+    display: none !important;
+}
+
+#warn {
+    background-color: #ff7700;
 }

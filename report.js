@@ -6,6 +6,8 @@ const associationDataEl = $('#morphData')
 const graphEl = $('#graph')
 const tableEl = $('#table')
 const legendEl = $('#legend')
+const errorEl = $('#error')
+const warnEl = $('#warn')
 const linePaddingLeft = 15
 const dotRadius = 4
 const dotColor = '#77777788'
@@ -17,11 +19,62 @@ let categoryElMap = {}
 let dimensionNames = []
 let categoryNames = []
 let graphColorMap = {}
-let tableData = [];
-let assocData = [];
+let tableData = []
+let morphData = []
+
+let errors = {}
+let warnings = {}
 
 // --- functions
 
+const getDuplicates = values => values.filter((item, index) => values.indexOf(item) != index)
+
+const showError = (name, ...msg) => {
+
+    errors[name] = 'ERROR: ' + msg.map(value => value || 'undefined').join(' ')
+
+    let message = '';
+    Object.keys(errors).forEach(error => message += errors[error] + '\n')
+
+    errorEl.innerText = message;
+
+    errorEl.setAttribute('class', '')
+};
+const showWarning = (name, ...msg) => {
+
+    warnings[name] = 'WARNING: ' + msg.map(value => value || 'undefined').join(' ')
+
+    let message = '';
+    Object.keys(warnings).forEach(warning => message += warnings[warning] + '\n')
+
+    warnEl.innerText = message;
+
+    warnEl.setAttribute('class', '')
+}
+const clearError = (name) => {
+
+    if (!name) {
+        errors = {}
+    } else {
+        delete errors[name];
+    }
+
+    if (Object.keys(errors).length === 0) {
+        errorEl.setAttribute('class', 'hide')
+    }
+};
+const clearWarn = (name) => {
+
+    if (!name) {
+        warnings = {}
+    } else {
+        delete warnings[name];
+    }
+
+    if (Object.keys(warnings).length === 0) {
+        warnEl.setAttribute('class', 'hide')
+    }
+};
 
 const renderLegend = () => {
 
@@ -58,9 +111,11 @@ const renderLegend = () => {
 const renderTable = () => {
     tableEl.innerHTML = ''
 
+    let doThrow;
     headingElMap = {}
     categoryElMap = {}
     dimensionNames = []
+    categoryNames = []
 
     for (let i=0; i<tableData.length; i++) {
 
@@ -68,6 +123,7 @@ const renderTable = () => {
         let rowEl = document.createElement('tr')
         let categoryName;
         let dimensionName;
+
 
         for (let j=0; j<row.length; j++) {
             let td = document.createElement(i === 0 ? 'th' : 'td')
@@ -100,9 +156,18 @@ const renderTable = () => {
             rowEl.appendChild(td)
         }
         tableEl.appendChild(rowEl)
+
+        if (i > 0 && getDuplicates(row).length > 0) {
+            showError('DUPLICATE_BASE_DATA_ENTRY', 'There is a duplicate property of category', categoryName, '! n times: ', getDuplicates(row))
+            doThrow = "DUPLICATE_BASE_DATA_ENTRY"
+        }
     }
 
-    syncGraphSizeWithTableSize();
+    if (doThrow) {
+        throw doThrow;
+    } else {
+        clearError('DUPLICATE_BASE_DATA_ENTRY')
+    }
 }
 
 const renderGraph = () => {
@@ -110,7 +175,16 @@ const renderGraph = () => {
     graphColorMap = {}
     graphEl.innerHTML = ''
 
-    showDimensions.forEach((dimensionName, columnIndex) => {
+    if (getDuplicates(dimensionNames).length > 0) {
+        showError('DUPLICATE_DIMENSION', 'Duplicate dimensions found: ', getDuplicates(dimensionNames))
+    } else {
+        clearError('DUPLICATE_DIMENSION')
+    }
+
+    dimensionNames.forEach((dimensionName, columnIndex) => {
+
+        // don't render dimension if not included in filter
+        if (!showDimensions.includes(dimensionName)) return;
 
         let lineCoords = []
         let dotCoords = []
@@ -124,17 +198,21 @@ const renderGraph = () => {
             y2: targetDimensionEl.offsetTop + targetDimensionEl.clientHeight
         }
 
-        assocData.forEach((association, rowIndex) => {
+        morphData.forEach((morph, rowIndex) => {
 
-            let value = association[columnIndex];
+            let value = morph[columnIndex];
             if (rowIndex === 0) {
-                graphColorMap[dimensionName] = value
+                graphColorMap[dimensionName] = String(value)
                 return;
             };
             let categoryName = categoryNames[rowIndex-1]
 
             lineColor = graphColorMap[dimensionName];
             let targetCategoryEl = categoryElMap[categoryName][value];
+
+            if (!targetCategoryEl) {
+                showWarning('CANNOT_FIND_ELEMENT_BASE_DATA', 'Cannot find element', value, 'for category', categoryName, 'in base data!')
+            }
 
             lineCoords[rowIndex] = {
                 x1: lineCoords[rowIndex-1].x2,
@@ -154,8 +232,17 @@ const renderGraph = () => {
         lineCoords.forEach((lineCoord) => {
 
             lineCoord.stroke = lineColor
+
+            if (!lineColor || lineColor == 'undefined') {
+                showError('CANNOT_FIND_LINE_COLOR', 'At least one dimension color is missing! Check morph data, second row!')
+                throw "CANNOT_FIND_LINE_COLOR"
+            } else {
+                clearError('CANNOT_FIND_LINE_COLOR')
+            }
+
             lineCoord['stroke-width'] = 2
             //lineCoord['stroke-dasharray'] = `${columnIndex} ${rowIndex}`
+
             lineCoord['stroke-dasharray'] = `2 ${columnIndex+1}`
             
             const line = document.createElementNS(svgNS, 'line')
@@ -201,7 +288,7 @@ const parseTableBaseData = () => {
 
 const parseGraphData = () => {
     try {
-        assocData = getData(associationDataEl.value)
+        morphData = getData(associationDataEl.value)
     } catch(e) {}
 }
 
@@ -227,12 +314,21 @@ const render = (doResetFilter = true) => {
     if (doResetFilter) {
         resetFilter()
     }
-    parseTableBaseData()
-    renderTable()
-    syncGraphSizeWithTableSize()
-    parseGraphData()
-    renderGraph()
-    renderLegend()
+    // ignore errors as we show warnings
+    // and errors are OK cases when data
+    // is undergoing interactive editing
+    try {
+        parseTableBaseData()
+        renderTable()
+        syncGraphSizeWithTableSize()
+        parseGraphData()
+        renderGraph()
+        renderLegend()
+
+        clearError()
+        clearWarn()
+
+    } catch(e) {}   
 }
 
 window.addEventListener('load', () => {
