@@ -46,7 +46,7 @@ const renderLegend = () => {
             } else {
                 showDimensions.push(dimensionName)
             }
-            render();
+            render(false /* dont reset filter */);
         })
         
         legendEl.appendChild(checkBoxEl)
@@ -223,8 +223,10 @@ const resetFilter = () => {
 }
 
 // --- initialization
-const render = () => {
-    resetFilter()
+const render = (doResetFilter = true) => {
+    if (doResetFilter) {
+        resetFilter()
+    }
     parseTableBaseData()
     renderTable()
     syncGraphSizeWithTableSize()
