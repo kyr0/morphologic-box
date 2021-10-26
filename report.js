@@ -1,12 +1,12 @@
 
-const baseDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate
-Type of provider	For profit	Non-profit / Institute	Non-profit / NGO	Non-profit / Government	
-Type of calculation	Web	App	Excel	App + Web available	`
+const baseDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6. More	7. More	8. More	9. More	10. More
+Type of provider	For profit	Non-profit / Institute	Non-profit / NGO	Non-profit / Government						
+Type of calculation	Web	App	Excel	App + Web available						`
 
-const morphDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate
-Line Color (hex)	#2DCBD7	red	blue	purple	grey
-Type of provider	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit
-Type of calculation	Web	Web	Web	Web	Web`
+const morphDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6 Lol	7. More	8. More	9. More	10. More
+Line Color (hex)	#2DCBD7	Green	blue	purple	grey	Red	grey	grey	grey	grey
+Type of provider	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit	Non-profit / NGO	For profit
+Type of calculation	Web	Web	Excel	Web	Web	Web	Web	Excel	App	App`
 
 const $ = (selector) => document.querySelector(selector) 
 const svgNS = 'http://www.w3.org/2000/svg'
@@ -40,7 +40,7 @@ let warnings = {}
 
 // --- functions
 
-const getDuplicates = values => values.filter((item, index) => values.indexOf(item) != index)
+const getDuplicates = values => values.filter((item, index) => values.indexOf(item) !== index && item.trim() !== '')
 
 const showError = (name, ...msg) => {
     errors[name] = 'ERROR: ' + msg.map(value => value || 'undefined').join(' ')
@@ -138,15 +138,41 @@ const renderTable = () => {
     dimensionNames = []
     categoryNames = []
 
+    // pre-scan for max options length
+    let maxOptionsLength = 0
+    let dimensionsLength = 0
+    for (let i=0; i<tableData.length; i++) {
+        const rowData = tableData[i].filter((item) => item.trim() !== '')
+        if (i===0) {
+            dimensionsLength = rowData.length
+        } else {
+            if (rowData.length > maxOptionsLength) {
+                maxOptionsLength = rowData.length
+            }
+        }
+        console.log('rowData', rowData)
+    }
+    maxOptionsLength -= 1 // first column
+    dimensionsLength -= 1 // first column
+
+    // scale each option to multiple columns in case there are 
+    // more more dimensions than options
+    let colspanForOptions = dimensionsLength % maxOptionsLength
+    if (colspanForOptions < 1) colspanForOptions = 1
+
     for (let i=0; i<tableData.length; i++) {
 
         const row = tableData[i]
-        let rowEl = document.createElement('tr')
+        let rowEl = document.createElement(i === 0 ? 'thead' : 'tr')
         let categoryName;
         let dimensionName;
 
         for (let j=0; j<row.length; j++) {
+
+            if (row[j].trim() === '') continue
+
             let td = document.createElement(i === 0 ? 'th' : 'td')
+
             td.innerHTML = row[j]
 
             if (i === 0) {
@@ -161,6 +187,11 @@ const renderTable = () => {
                     }
                 }
                 headingElMap[dimensionName] = td;
+            }
+            
+            if (j > 0 && i > 0) {
+                // apply colSpan to option columns
+                td.colSpan = colspanForOptions
             }
 
             if (j === 0) {
