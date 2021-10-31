@@ -549,15 +549,6 @@ const filterByCategoryAndOption = () => {
         
             render(false)
 
-            // doublebuffer
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-
-                    render(false)
-
-                }, 500)
-            })
-
         } else {
             console.error('Optiion ', optionSelectorEl.value, ' cannot be found in index! Category: ', categorySelectorEl.value)
         }
@@ -584,36 +575,24 @@ const render = (doResetFilter = true) => {
     // is undergoing interactive editing
     try {
 
-        setTimeout(() => {
 
-            parseTableBaseData()
+        parseTableBaseData()
 
-            renderTable()
-            renderCategorySelector(categoryOptionFilterActive[0])
-            renderOptionSelector(categoryOptionFilterActive[1])
+        renderTable()
+        renderCategorySelector(categoryOptionFilterActive[0])
+        renderOptionSelector(categoryOptionFilterActive[1])
+        syncGraphSizeWithTableSize()
+        parseGraphData()
+        renderGraph()
 
-            requestAnimationFrame(() => {
+        renderLegend()
 
-                syncGraphSizeWithTableSize()
+        clearError()
+        clearWarn()
 
-                setTimeout(() => {
-                    parseGraphData()
-                    renderGraph()
+        updateDimensionCount()
 
-                    requestAnimationFrame(() => {
-        
-                        renderLegend()
-
-                        clearError()
-                        clearWarn()
-
-                        updateDimensionCount()
-
-                        hasMorphDataChanged = false
-                    }) 
-                }, 1)
-            })
-        }, 1)
+        hasMorphDataChanged = false
 
     } catch(e) {
         console.error(e)
