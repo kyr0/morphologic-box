@@ -18,6 +18,11 @@
         <h1>Morphological / Zwicky Box</h1>
         <p>Interactive multi-dimensional data mapping. Table can be resized. In case of unresolvable error states, click all reset buttons (this may cause data loss!).</p>
 
+        <div class="selectionControls">
+
+            Filter by category/option: <select id="categorySelector"></select> / <select id="optionSelector"></select> (showing <span id="dimensionCount"></span> dimensions in total)
+        </div>
+
         <div class="report">
             <div class="visualization">
                 <svg id="graph"></svg>
@@ -27,10 +32,13 @@
                 <div class="controls">
                     <legend id="legend"></legend>
                     <button id="switchAll">Switch all</button>
+                    <button class="toggleLineDotted">Toggle line type (overlay dotted or stroke)</button>
                 </div>
                 <span class="hide" id="error"></span>
                 <span class="hide" id="warn"></span>
             </div>
+
+            <button class="toggleControls">Toggle resize controls 🎛️</button>
 
             <div class="data">
                 <h2>Base data (CSV/TSV)</h2>

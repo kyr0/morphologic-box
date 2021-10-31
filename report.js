@@ -1,14 +1,13 @@
-
-const baseDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6. More	7. More	8. More	9. More	10. More
+const baseDataDefaultValue = `Categ. Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6. More	7. More	8. More	9. More	10. More
 Type of provider	For profit	Non-profit / Institute	Non-profit / NGO	Non-profit / Government						
 Type of calculation	Web	App	Excel	App + Web available						`
 
-const morphDataDefaultValue = `Categ./Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6 Lol	7. More	8. More	9. More	10. More
+const morphDataDefaultValue = `Categ. Dimens.	1. Carbonify	2. Carbon Neutral - Standard	3. Carbon Neutral - Advanced	4. Carbon Positive Australia	5. Team Climate	6 Lol	7. More	8. More	9. More	10. More
 Line Color (hex)	#2DCBD7	Green	blue	purple	grey	Red	grey	grey	grey	grey
 Type of provider	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit	For profit	Non-profit / NGO	For profit	Non-profit / NGO	For profit
 Type of calculation	Web	Web	Excel	Web	Web	Web	Web	Excel	App	App`
 
-const $ = (selector) => document.querySelector(selector) 
+const $ = (selector, parentEl) => document.querySelector(selector, parentEl) 
 const svgNS = 'http://www.w3.org/2000/svg'
 const baseDataEl = $('#baseData')
 const morphDataEl = $('#morphData')
@@ -21,11 +20,15 @@ const switchAllEl = $('#switchAll')
 const resetBaseDataEl = $('#resetBaseData')
 const resetMorphDataEl = $('#resetMorphData')
 const visuEl = $('.visualization')
-const linePaddingLeft = 20
+const categorySelectorEl = $('#categorySelector')
+const optionSelectorEl = $('#optionSelector')
+const linePaddingLeft = -10
 const dotRadius = 4
 const dotColor = '#77777788'
 
-let isFilterActive = false;
+let hasMorphDataChanged = true
+let isFilterActive = false
+let categoryOptionFilterActive = []
 let showDimensions = []
 let headingElMap = {}
 let categoryElMap = {}
@@ -34,9 +37,15 @@ let categoryNames = []
 let graphColorMap = {}
 let tableData = []
 let morphData = []
+let headerHeight = 50
 
 let errors = {}
 let warnings = {}
+
+/*
+  categoryDimensionFilterIndex[categoryName][optionName] = [dimensionName1, ...]
+*/
+let categoryDimensionFilterIndex = {}
 
 // --- functions
 
@@ -115,7 +124,8 @@ const renderLegend = () => {
     })
 }
 
-const switchAllFilters = () => {
+const switchAllFilters = (evt) => {
+
     if (isFilterActive) {
         // enable all
         showDimensions = dimensionNames
@@ -125,11 +135,17 @@ const switchAllFilters = () => {
     }
     isFilterActive = !isFilterActive
 
-    render(false)
+    render(false /* dont reset filter */)
+    evt.stopPropagation();
 }
 
 // render table from base data CSV
 const renderTable = () => {
+
+    // invalidate index cache
+    if (hasMorphDataChanged) {
+        categoryDimensionFilterIndex = {}
+    }
     tableEl.innerHTML = ''
 
     let doThrow;
@@ -141,24 +157,29 @@ const renderTable = () => {
     // pre-scan for max options length
     let maxOptionsLength = 0
     let dimensionsLength = 0
+    let maxOptionsLengths = []
+    
     for (let i=0; i<tableData.length; i++) {
         const rowData = tableData[i].filter((item) => item.trim() !== '')
         if (i===0) {
             dimensionsLength = rowData.length
         } else {
+
+            let shownDimensionsLength = isFilterActive ? showDimensions.length : dimensionsLength
+            maxOptionsLengths[i] = Math.round(shownDimensionsLength / rowData.length)
+            
             if (rowData.length > maxOptionsLength) {
                 maxOptionsLength = rowData.length
             }
         }
-        console.log('rowData', rowData)
     }
     maxOptionsLength -= 1 // first column
     dimensionsLength -= 1 // first column
 
     // scale each option to multiple columns in case there are 
     // more more dimensions than options
-    let colspanForOptions = dimensionsLength % maxOptionsLength
-    if (colspanForOptions < 1) colspanForOptions = 1
+    let colspanForOptions = Math.round(dimensionsLength / maxOptionsLength)
+
 
     for (let i=0; i<tableData.length; i++) {
 
@@ -171,27 +192,57 @@ const renderTable = () => {
 
             if (row[j].trim() === '') continue
 
-            let td = document.createElement(i === 0 ? 'th' : 'td')
+            const td = document.createElement(i === 0 ? 'th' : 'td')
+            const caption = document.createElement('span')
+            caption.setAttribute('class', i === 0 ? 'caption' : 'cell')
 
-            td.innerHTML = row[j]
+            caption.innerText = row[j]
+
+            td.appendChild(caption)
 
             if (i === 0) {
                 dimensionName = row[j]
 
+
                 // not the first column
                 if (j > 0) {
+
                     dimensionNames.push(dimensionName)
 
+                    
                     if (!isFilterActive) {
-                        showDimensions.push(dimensionName)
+
+                        if (showDimensions.indexOf(dimensionName) === -1) {
+                            showDimensions.push(dimensionName)
+                        }
+                    }
+                    
+
+                    if (isFilterActive && showDimensions.indexOf(dimensionName) === -1) {
+                        continue;
                     }
                 }
                 headingElMap[dimensionName] = td;
             }
+
+            if (j > 0 && i > 0) {
+                // first column of category rows
+                td.style.height = `${Math.round(20 * (2 + showDimensions.length/100))}px`
+            }
             
             if (j > 0 && i > 0) {
                 // apply colSpan to option columns
-                td.colSpan = colspanForOptions
+                td.colSpan = maxOptionsLengths[i]//colspanForOptions
+
+                // -- build category/option filter index data structure
+                if (typeof categoryDimensionFilterIndex[categoryName] === 'undefined') {
+                    categoryDimensionFilterIndex[categoryName] = {}
+                }
+
+                if (typeof categoryDimensionFilterIndex[categoryName][td.innerText] === 'undefined') {
+                    categoryDimensionFilterIndex[categoryName][td.innerText] = []
+                }
+                // -- end build category/option filter index data structure
             }
 
             if (j === 0) {
@@ -201,6 +252,7 @@ const renderTable = () => {
                     categoryNames.push(categoryName)
                 }
                 categoryElMap[categoryName] = {}
+
             } else {
                 categoryElMap[categoryName][row[j]] = td
             }
@@ -218,6 +270,80 @@ const renderTable = () => {
         throw doThrow;
     } else {
         clearError('DUPLICATE_BASE_DATA_ENTRY')
+    }
+}
+
+// fill category selector with <option> elements
+const renderCategorySelector = (selectedValue) => {
+
+    categorySelectorEl.innerHTML = ''
+
+    const allCategoryOption = document.createElement('option')
+    allCategoryOption.value = 'all'
+    allCategoryOption.name = 'all'
+    allCategoryOption.innerText = 'All'
+    categorySelectorEl.appendChild(allCategoryOption)
+
+    for (let i=0; i<categoryNames.length; i++) {
+        const categoryOption = document.createElement('option')
+        categoryOption.value = categoryNames[i]
+        categoryOption.name = categoryNames[i]
+        categoryOption.innerText = categoryNames[i]
+        categorySelectorEl.appendChild(categoryOption)
+    }
+
+    if (selectedValue) {
+        categorySelectorEl.value = selectedValue;
+    } else {
+        categorySelectorEl.value = allCategoryOption.value;
+    }
+}
+
+// fill option selector with <option> elements
+const renderOptionSelector = (selectedValue) => {
+
+    if (categorySelectorEl.value !== 'all') {
+
+        optionSelectorEl.innerHTML = ''
+
+        const unknownOptionsOption = document.createElement('option')
+        unknownOptionsOption.value = 'unknown'
+        unknownOptionsOption.name = 'unknown'
+        unknownOptionsOption.innerText = 'Please select a category'
+        optionSelectorEl.appendChild(unknownOptionsOption)
+
+        const options = Object.keys(categoryElMap[categorySelectorEl.value]);
+
+        categoryOptionFilterActive[0] = categorySelectorEl.value;
+
+        options.forEach((optionValue) => {
+
+            const optionsOption = document.createElement('option')
+            optionsOption.value = optionValue
+            optionsOption.name = optionValue
+            optionsOption.innerText = optionValue
+            optionSelectorEl.appendChild(optionsOption)
+        })
+
+        if (selectedValue) {
+
+            categoryOptionFilterActive[1] = selectedValue;
+
+            optionSelectorEl.value = selectedValue;
+        } else {
+            optionSelectorEl.value = unknownOptionsOption.value;
+        }
+    } else {
+
+        optionSelectorEl.innerHTML = ''
+
+        const unknownOptionsOption = document.createElement('option')
+        unknownOptionsOption.value = 'unknown'
+        unknownOptionsOption.name = 'unknown'
+        unknownOptionsOption.innerText = 'Please select a category'
+        optionSelectorEl.appendChild(unknownOptionsOption)
+
+        optionSelectorEl.value = unknownOptionsOption.value
     }
 }
 
@@ -266,19 +392,30 @@ const renderGraph = () => {
             lineColor = graphColorMap[dimensionName];
             let targetCategoryEl = categoryElMap[categoryName][value];
 
+            // build index
+            if (hasMorphDataChanged) {
+                categoryDimensionFilterIndex[categoryName][value].push(dimensionName)
+            }
+
             if (!targetCategoryEl) {
                 showWarning('CANNOT_FIND_ELEMENT_BASE_DATA', 'Cannot find element', value, 'for category', categoryName, 'in base data!')
+            }
+
+            let leftPadding = 0;
+
+            if (targetCategoryEl && targetCategoryEl.childNodes[0] && targetCategoryEl.childNodes[0].offsetLeft) {
+                leftPadding = targetCategoryEl.childNodes[0].offsetLeft;
             }
 
             lineCoords[rowIndex-1] = {
                 x1: lineCoords[rowIndex-2].x2,
                 y1: lineCoords[rowIndex-2].y2,
-                x2: targetCategoryEl.offsetLeft + linePaddingLeft,
+                x2: targetCategoryEl.offsetLeft + linePaddingLeft + leftPadding,
                 y2: targetCategoryEl.offsetTop + targetCategoryEl.clientHeight / 2,
             }
 
             dotCoords[rowIndex-1] = {
-                cx: targetCategoryEl.offsetLeft + linePaddingLeft,
+                cx: targetCategoryEl.offsetLeft + linePaddingLeft + leftPadding,
                 cy: targetCategoryEl.offsetTop + targetCategoryEl.clientHeight / 2,
                 r: dotRadius
             }
@@ -297,10 +434,11 @@ const renderGraph = () => {
             }
 
             lineCoord['stroke-width'] = 2
-            //lineCoord['stroke-dasharray'] = `${columnIndex} ${rowIndex}`
 
-            lineCoord['stroke-dasharray'] = `2 ${columnIndex+1}`
-            
+            if (lineDotted) {
+                lineCoord['stroke-dasharray'] = `2 ${columnIndex/2+1}`
+            }
+
             const line = document.createElementNS(svgNS, 'line')
 
             for (let attrName in lineCoord) {
@@ -349,6 +487,37 @@ const parseGraphData = () => {
 }
 
 const syncGraphSizeWithTableSize = () => {
+
+    const captions = document.querySelectorAll('#table th span')
+    let columnHeight = 20;
+
+    Object.keys(headingElMap).forEach((heading, index) => {
+
+        const headingCaptionEl = captions[index];
+
+        if (headingCaptionEl) {
+
+            if (headingCaptionEl.clientWidth > columnHeight) {
+                columnHeight = headingCaptionEl.clientWidth; // bc of transform
+            }
+        }
+    })
+
+    Object.keys(headingElMap).forEach((heading) => {
+        const headingEl = headingElMap[heading]
+        headingEl.style.height = `${columnHeight}px`
+    });
+
+    const categoryEls = document.querySelectorAll('#table .category')
+    Object.keys(categoryElMap).forEach((category, index) => {
+        if (index === 0) return
+        const categoryEl = categoryEls[index]
+
+        if (categoryEl) {
+            //categoryEl.style.height = `${columnHeight}px`
+        }
+    })
+
     graphEl.style.width = tableEl.clientWidth
     graphEl.style.height = tableEl.clientHeight
 
@@ -362,27 +531,89 @@ const syncGraphSizeWithTableSize = () => {
 
 const resetFilter = () => {
     showDimensions = []
+    categoryOptionFilterActive = []
     isFilterActive = false
+}
+
+const filterByCategoryAndOption = () => {
+
+    if (categoryDimensionFilterIndex[categorySelectorEl.value] && categorySelectorEl.value !== 'all') {
+
+        if (categoryDimensionFilterIndex[categorySelectorEl.value][optionSelectorEl.value]) {
+
+            isFilterActive = true
+            showDimensions = categoryDimensionFilterIndex[categorySelectorEl.value][optionSelectorEl.value]
+
+            console.log('filterByCategoryAndOption', showDimensions)
+            categoryOptionFilterActive = [categorySelectorEl.value, optionSelectorEl.value]
+        
+            render(false)
+
+            // doublebuffer
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+
+                    render(false)
+
+                }, 500)
+            })
+
+        } else {
+            console.error('Optiion ', optionSelectorEl.value, ' cannot be found in index! Category: ', categorySelectorEl.value)
+        }
+
+    } if (categorySelectorEl.value === 'all') {
+
+        // 'all' selected again; reset filter
+        render()
+    }
+}
+
+const updateDimensionCount = () => {
+    $('#dimensionCount').innerText = showDimensions.length
 }
 
 // --- initialization
 const render = (doResetFilter = true) => {
-    if (doResetFilter) {
+
+    if (doResetFilter === true) {
         resetFilter()
     }
     // ignore errors as we show warnings
     // and errors are OK cases when data
     // is undergoing interactive editing
     try {
-        parseTableBaseData()
-        renderTable()
-        syncGraphSizeWithTableSize()
-        parseGraphData()
-        renderGraph()
-        renderLegend()
 
-        clearError()
-        clearWarn()
+        setTimeout(() => {
+
+            parseTableBaseData()
+
+            renderTable()
+            renderCategorySelector(categoryOptionFilterActive[0])
+            renderOptionSelector(categoryOptionFilterActive[1])
+
+            requestAnimationFrame(() => {
+
+                syncGraphSizeWithTableSize()
+
+                setTimeout(() => {
+                    parseGraphData()
+                    renderGraph()
+
+                    requestAnimationFrame(() => {
+        
+                        renderLegend()
+
+                        clearError()
+                        clearWarn()
+
+                        updateDimensionCount()
+
+                        hasMorphDataChanged = false
+                    }) 
+                }, 1)
+            })
+        }, 1)
 
     } catch(e) {
         console.error(e)
@@ -394,6 +625,8 @@ window.addEventListener('load', () => {
     // restore initially
     restore(baseDataEl, 'baseData', baseDataDefaultValue)
     restore(morphDataEl, 'morphData', morphDataDefaultValue)
+
+    hasMorphDataChanged = true
 
     render()
 })
@@ -418,6 +651,7 @@ resetMorphDataEl.addEventListener('click', () => {
     store('morphData', morphDataDefaultValue)
     restore(morphDataEl, 'morphData')
     render()
+    evt.stopPropagation();
 })
 
 
@@ -425,13 +659,54 @@ resetMorphDataEl.addEventListener('click', () => {
 baseDataEl.addEventListener('keyup', (evt) => {
     store('baseData', evt.target.value)
     render()
+    evt.stopPropagation();
 })
 morphDataEl.addEventListener('keyup', (evt) => {
     store('morphData', evt.target.value)
+    hasMorphDataChanged = true
     render()
+    hasMorphDataChanged = false
+    evt.stopPropagation();
 })
 switchAllEl.addEventListener('click', switchAllFilters)
-window.addEventListener('resize', render)
-window.addEventListener('beforeprint', render)
+
+tableEl.addEventListener('scroll', () => render(false /* dont reset filter */))
+tableEl.addEventListener('resize', () => render(false /* dont reset filter */))
+window.addEventListener('resize', () => render(false /* dont reset filter */))
+window.addEventListener('beforeprint', () => render(false /* dont reset filter */))
 
 new ResizeObserver(render).observe(visuEl)
+
+// -- show hide data and controls
+let showControls = true;
+$('.toggleControls').addEventListener('click', () => {
+
+    if (!showControls) {
+        $('#tableContainer').setAttribute('class', '')
+    } else {
+        $('#tableContainer').setAttribute('class', 'tableContainerResize')
+    }
+    showControls = !showControls
+})
+
+// -- line dotted toggle
+
+let lineDotted = false
+$('.toggleLineDotted').addEventListener('click', () => {
+
+    lineDotted = !lineDotted
+
+    render(false)
+})
+
+// -- category/option selector
+categorySelectorEl.addEventListener('change', () => {
+
+    renderOptionSelector()
+
+    // changed back to all
+    if (categorySelectorEl.value === 'all') {
+        filterByCategoryAndOption()
+    }
+})
+optionSelectorEl.addEventListener('change', () => filterByCategoryAndOption())
